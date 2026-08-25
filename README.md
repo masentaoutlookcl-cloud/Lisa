@@ -1,277 +1,1028 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
-    <meta name="theme-color" content="#0b0e14">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Lisa IA">
-    
-    <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIkxpc2EgSUEiLAogICJzaG9ydF9uYW1lIjogIkxpc2EiLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzBiMGUxNCIsCiAgInRoZW1lX2NvbG9yIjogIzAwZDRmZiIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImh0dHBzOi8vY2RuLWljb25zLXBuZy5mbGF0aWNvbi5jb20vNTEyLzIxMDMvMjEwMzA0NS5wbmciLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIKICAgIH1cbiAgXQp9">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Guardian de Energía</title>
 
-    <title>Lisa IA | App</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #00d4ff;
-            --primary-gradient: linear-gradient(135deg, #00d4ff 0%, #0072ff 100%);
-            --bg: #0b0e14;
-            --surface: #161b22;
-            --text: #ffffff;
-            --text-dim: #8b949e;
-            --nav-h: 75px;
-        }
+<style>
+*{
+    box-sizing:border-box;
+    touch-action: none;
+}
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#02030b;
+    cursor:none;
+    user-select: none;
+    -webkit-user-select: none;
+}
 
-        body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            background-color: var(--bg); color: var(--text);
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            overflow: hidden;
-        }
+canvas{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+}
 
-        .main-wrapper {
-            display: flex; flex-direction: column;
-            height: 100vh; height: -webkit-fill-available;
-        }
+:root{
+    --color:#00eaff;
+}
 
-        /* --- CONTENIDO --- */
-        .content-area { flex: 1; position: relative; overflow: hidden; }
+/* HUD */
+#hud{
+    position:fixed;
+    top:18px;
+    left:20px;
+    z-index:10;
+    color:white;
+    font-family:Arial,sans-serif;
+    font-size:18px;
+    line-height:1.55;
+    text-shadow: 0 0 8px var(--color), 0 0 18px var(--color);
+}
 
-        .page {
-            display: none; flex-direction: column;
-            height: 100%; width: 100%;
-            animation: fadeIn 0.3s ease-out;
-        }
+.value{
+    color:var(--color);
+    font-weight:bold;
+}
 
-        .page.active { display: flex; }
+.bar{
+    width:210px;
+    height:11px;
+    margin:3px 0 5px;
+    background:#111525;
+    border:1px solid #4b5370;
+    border-radius:20px;
+    overflow:hidden;
+}
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+#shieldBar{
+    width:100%;
+    height:100%;
+    background:var(--color);
+    box-shadow: 0 0 12px var(--color);
+    transition: width .2s, background 1s;
+}
 
-        /* --- CHAT --- */
-        #chat-scroller {
-            flex: 1; overflow-y: auto;
-            padding: 20px 15px; display: flex;
-            flex-direction: column; gap: 12px;
-            padding-top: calc(15px + env(safe-area-inset-top));
-        }
+/* BOTÓN DE OPCIONES */
+#settingsBtn{
+    position:fixed;
+    top:20px;
+    right:20px;
+    z-index:30;
+    background:rgba(2, 3, 11, 0.75);
+    border:2px solid var(--color);
+    color:white;
+    padding:10px 18px;
+    border-radius:12px;
+    font-size:16px;
+    font-weight:bold;
+    font-family:Arial,sans-serif;
+    cursor:pointer;
+    box-shadow:0 0 10px rgba(0,0,0,0.5);
+    transition:transform 0.2s, background 0.2s;
+}
 
-        .bubble {
-            max-width: 85%; padding: 12px 16px;
-            border-radius: 20px; font-size: 15px; line-height: 1.4;
-        }
+#settingsBtn:active{
+    transform:scale(0.95);
+}
 
-        .bubble.ia {
-            align-self: flex-start; background: var(--surface);
-            border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.05);
-        }
+/* PANEL LATERAL DE OPCIONES */
+#settingsPanel{
+    position:fixed;
+    top:0;
+    right:-320px;
+    width:300px;
+    height:100%;
+    background:rgba(6, 10, 26, 0.95);
+    border-left:2px solid var(--color);
+    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.8);
+    z-index:40;
+    padding:30px 20px;
+    color:white;
+    font-family:Arial,sans-serif;
+    transition:right 0.3s ease-in-out;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+}
 
-        .bubble.user {
-            align-self: flex-end; background: var(--primary-gradient);
-            color: white; border-bottom-right-radius: 4px;
-        }
+#settingsPanel.open{
+    right:0;
+}
 
-        /* --- INPUT --- */
-        .input-section {
-            padding: 10px 15px 15px;
-            background: var(--bg);
-            border-top: 1px solid rgba(255,255,255,0.05);
-        }
+#settingsPanel h2{
+    margin:0 0 5px;
+    color:var(--color);
+    text-shadow: 0 0 10px var(--color);
+    font-size:24px;
+    text-align:center;
+}
 
-        .input-bar {
-            background: var(--surface); border-radius: 25px;
-            display: flex; align-items: center;
-            padding: 5px 5px 5px 15px; border: 1px solid rgba(255,255,255,0.1);
-        }
+.setting-group{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
 
-        .input-bar input {
-            flex: 1; background: transparent; border: none;
-            color: white; font-size: 16px; outline: none; padding: 10px 0;
-        }
+.setting-group label{
+    font-size:15px;
+    display:flex;
+    justify-content:space-between;
+}
 
-        .send-btn {
-            width: 40px; height: 40px; border-radius: 50%;
-            background: var(--primary-gradient); border: none;
-            display: flex; justify-content: center; align-items: center;
-        }
+.setting-group input[type="range"]{
+    accent-color: var(--color);
+    cursor:pointer;
+    height:6px;
+}
 
-        /* --- NAV --- */
-        #navbar {
-            height: var(--nav-h); background: #0d1117;
-            display: flex; border-top: 1px solid #30363d;
-            padding-bottom: env(safe-area-inset-bottom);
-        }
+/* BOTÓN DE PAUSA Y CERRAR */
+.panel-btn{
+    padding:12px;
+    border:none;
+    font-weight:bold;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:16px;
+}
 
-        .nav-item {
-            flex: 1; background: none; border: none;
-            color: var(--text-dim); display: flex;
-            flex-direction: column; align-items: center;
-            justify-content: center; font-size: 11px; gap: 4px;
-        }
+#pauseGameBtn{
+    background:rgba(0, 234, 255, 0.15);
+    color:var(--color);
+    border:1px solid var(--color);
+    box-shadow: 0 0 8px rgba(0,234,255,0.2);
+}
 
-        .nav-item.active { color: var(--primary); }
+#closeSettingsBtn{
+    margin-top:auto;
+    background:var(--color);
+    color:#001018;
+}
 
-        /* --- MEMORIA --- */
-        .storage-container { padding: 40px 20px; overflow-y: auto; }
-        .stat-card {
-            background: var(--surface); border-radius: 15px;
-            padding: 20px; margin-bottom: 20px; text-align: center;
-        }
-        .mem-item {
-            background: rgba(255,255,255,0.03); padding: 15px;
-            border-radius: 12px; display: flex;
-            justify-content: space-between; align-items: center; margin-bottom: 8px;
-        }
-    </style>
+/* MENSAJE DE PAUSA EN PANTALLA */
+#pauseOverlay{
+    position:fixed;
+    inset:0;
+    background:rgba(2, 3, 11, 0.65);
+    backdrop-filter: blur(4px);
+    z-index:25;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-family:Arial,sans-serif;
+    font-size:45px;
+    font-weight:bold;
+    text-shadow: 0 0 20px var(--color);
+    pointer-events:none;
+    letter-spacing: 2px;
+}
+
+/* MENSAJE DE NIVEL */
+#levelMessage{
+    position:fixed;
+    left:50%;
+    top:38%;
+    transform: translate(-50%,-50%) scale(.5);
+    z-index:20;
+    color:white;
+    font-family:Arial,sans-serif;
+    font-size:65px;
+    font-weight:bold;
+    opacity:0;
+    text-shadow: 0 0 15px var(--color), 0 0 40px var(--color), 0 0 80px var(--color);
+    pointer-events:none;
+}
+
+.showLevel{
+    animation:levelAnimation 1.3s ease-out;
+}
+
+@keyframes levelAnimation{
+    0%{ opacity:0; transform: translate(-50%,-50%) scale(.4); }
+    30%{ opacity:1; transform: translate(-50%,-50%) scale(1.2); }
+    70%{ opacity:1; transform: translate(-50%,-50%) scale(1); }
+    100%{ opacity:0; transform: translate(-50%,-50%) scale(1.5); }
+}
+
+/* GAME OVER */
+#gameOver{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    z-index:50;
+    background:rgba(0,0,10,.9);
+    color:white;
+    font-family:Arial,sans-serif;
+    text-align:center;
+}
+
+#gameOver h1{
+    font-size:60px;
+    margin:10px;
+    color:var(--color);
+    text-shadow: 0 0 30px var(--color);
+}
+
+#restart{
+    margin-top:20px;
+    padding:14px 32px;
+    border:0;
+    border-radius:12px;
+    background:var(--color);
+    color:#001018;
+    font-size:19px;
+    font-weight:bold;
+    cursor:pointer;
+}
+</style>
 </head>
+
 <body>
 
-<div class="main-wrapper">
+<canvas id="gameCanvas"></canvas>
+
+<div id="hud">
+    ⭐ Puntos: <span class="value" id="score">0</span><br>
+    🔥 Nivel: <span class="value" id="level">1</span><br>
+    ⚡ Combo: <span class="value" id="combo">0</span><br>
+    🛡️ Escudo
+    <div class="bar">
+        <div id="shieldBar"></div>
+    </div>
+</div>
+
+<div id="pauseOverlay">JUEGO PAUSADO</div>
+
+<button id="settingsBtn">⚙️ Opciones</button>
+
+<!-- PANEL DE CONFIGURACIÓN -->
+<div id="settingsPanel">
+    <h2>OPCIONES</h2>
     
-    <main class="content-area">
-        <section id="page-chat" class="page active">
-            <header style="padding: 40px 20px 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                <h2 style="margin:0; font-size: 18px; color: var(--primary);">Lisa IA</h2>
-                <span style="font-size: 11px; color: #00f298;">● Lista para instalar</span>
-            </header>
+    <div class="setting-group">
+        <label>🎵 Música: <span id="musicVolVal">30%</span></label>
+        <input type="range" id="musicVolSlider" min="0" max="100" value="30">
+    </div>
 
-            <div id="chat-scroller">
-                <div class="bubble ia">¡Hola Lisa! Ya puedes instalarme. Toca el botón de compartir y luego "Agregar a inicio" para tenerme como una App real.</div>
-            </div>
+    <div class="setting-group">
+        <label>🔊 Efectos (SFX): <span id="sfxVolVal">70%</span></label>
+        <input type="range" id="sfxVolSlider" min="0" max="100" value="70">
+    </div>
 
-            <div class="input-section">
-                <div class="input-bar">
-                    <input type="text" id="userInput" placeholder="Pregúntame algo..." autocomplete="off">
-                    <button class="send-btn" onclick="sendMessage()">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                    </button>
-                </div>
-            </div>
-        </section>
+    <hr style="border:0; border-top:1px solid #28345c; margin:5px 0;">
 
-        <section id="page-memoria" class="page">
-            <div class="storage-container">
-                <h2 style="margin-bottom: 5px;">Núcleo Lisa</h2>
-                <div class="stat-card">
-                    <span style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Recuerdos locales</span>
-                    <div id="count-val" style="font-size: 32px; font-weight: bold; color: var(--primary);">0</div>
-                </div>
-                <div id="mem-list"></div>
-                <button class="btn-danger" style="background:none; border: 1px solid #ff4b6b; color:#ff4b6b; padding:15px; width:100%; border-radius:10px; margin-top:20px;" onclick="resetMemory()">Resetear Cerebro</button>
-            </div>
-        </section>
-    </main>
+    <div class="setting-group">
+        <button id="pauseGameBtn" class="panel-btn">⏸️ Pausar Juego</button>
+    </div>
 
-    <nav id="navbar">
-        <button class="nav-item active" onclick="switchPage('chat', this)">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            Chat
-        </button>
-        <button class="nav-item" onclick="switchPage('memoria', this)">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect></svg>
-            Memoria
-        </button>
-    </nav>
+    <button id="closeSettingsBtn" class="panel-btn">Cerrar</button>
+</div>
+
+<div id="levelMessage">
+    NIVEL <span id="levelNumber">1</span>
+</div>
+
+<div id="gameOver">
+    <h1>FIN DEL JUEGO</h1>
+    <div id="finalStats"></div>
+    <button id="restart">JUGAR OTRA VEZ</button>
 </div>
 
 <script>
-    // 1. Registro del Service Worker (Para que funcione offline)
-    if ('serviceWorker' in navigator) {
-        const sw = 'data:application/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGU9PntlLnJlc3BvbmRXaXRoKGZldGNoKGUucmVxdWVzdCkpO30pOw==';
-        navigator.serviceWorker.register('data:application/javascript;base64,' + btoa("self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));"));
-    }
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-    // 2. Base de Datos Local
-    const DB_NAME = "LisaAppDB";
-    let db;
-    const request = indexedDB.open(DB_NAME, 1);
-    request.onupgradeneeded = e => e.target.result.createObjectStore("kb", { keyPath: "q" });
-    request.onsuccess = e => { db = e.target.result; renderMemory(); };
+let W = innerWidth;
+let H = innerHeight;
 
-    // 3. Funciones de la App
-    function switchPage(pageId, btn) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-        document.getElementById('page-' + pageId).classList.add('active');
-        btn.classList.add('active');
-        if(pageId === 'memoria') renderMemory();
-    }
+function resize(){
+    W = canvas.width = innerWidth;
+    H = canvas.height = innerHeight;
+}
+window.addEventListener("resize", resize);
+resize();
 
-    function addMsg(txt, type) {
-        const scroller = document.getElementById('chat-scroller');
-        const d = document.createElement('div');
-        d.className = `bubble ${type}`;
-        d.innerText = txt;
-        scroller.appendChild(d);
-        scroller.scrollTop = scroller.scrollHeight;
-    }
+/* =====================================
+   CONTROL DE AUDIO Y ESTADOS
+===================================== */
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+let musicTimer = null;
+let musicStep = 0;
 
-    async function sendMessage() {
-        const input = document.getElementById('userInput');
-        const val = input.value.trim();
-        if(!val) return;
-        addMsg(val, 'user');
-        input.value = "";
-        
-        // Lógica de respuesta (puedes expandir esto)
-        const localData = await getData(val);
-        if(localData) {
-            addMsg(localData, "ia");
-        } else {
-            addMsg("Lo guardaré en mi memoria para la próxima, Lisa.", "ia");
-            saveData(val, "Me preguntaste sobre esto anteriormente.");
+let musicVolume = 0.03;
+let sfxVolume = 0.7;
+let isPaused = false;
+
+const musicSlider = document.getElementById("musicVolSlider");
+const sfxSlider = document.getElementById("sfxVolSlider");
+const musicVolVal = document.getElementById("musicVolVal");
+const sfxVolVal = document.getElementById("sfxVolVal");
+const pauseGameBtn = document.getElementById("pauseGameBtn");
+const pauseOverlay = document.getElementById("pauseOverlay");
+
+musicSlider.addEventListener("input", (e) => {
+    const val = e.target.value;
+    musicVolVal.textContent = val + "%";
+    musicVolume = (val / 100) * 0.1;
+});
+
+sfxSlider.addEventListener("input", (e) => {
+    const val = e.target.value;
+    sfxVolVal.textContent = val + "%";
+    sfxVolume = val / 100;
+});
+
+// Función de Pausa
+pauseGameBtn.addEventListener("click", () => {
+    isPaused = !isPaused;
+    if (isPaused) {
+        pauseGameBtn.textContent = "▶️ Reanudar";
+        pauseOverlay.style.display = "flex";
+        if (audioCtx && audioCtx.state === 'running') {
+            audioCtx.suspend();
         }
+    } else {
+        pauseGameBtn.textContent = "⏸️ Pausar Juego";
+        pauseOverlay.style.display = "none";
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        lastTime = performance.now();
+        requestAnimationFrame(gameLoop);
     }
+});
 
-    function saveData(q, a) {
-        const tx = db.transaction("kb", "readwrite");
-        tx.objectStore("kb").put({ q: q.toLowerCase(), a: a });
+// Frecuencias musicales
+const NOTES = {
+    C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, B3: 246.94,
+    C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
+    C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99, A5: 880.00, OFF: 0
+};
+
+const TRACKS = [
+    {
+        bpm: 120,
+        melody: [
+            NOTES.C4, NOTES.E4, NOTES.G4, NOTES.B4, NOTES.C5, NOTES.B4, NOTES.G4, NOTES.E4,
+            NOTES.A3, NOTES.C4, NOTES.E4, NOTES.G4, NOTES.A4, NOTES.G4, NOTES.E4, NOTES.C4
+        ]
+    },
+    {
+        bpm: 140,
+        melody: [
+            NOTES.E4, NOTES.E4, NOTES.G4, NOTES.E4, NOTES.A4, NOTES.E4, NOTES.B4, NOTES.E4,
+            NOTES.C5, NOTES.B4, NOTES.A4, NOTES.G4, NOTES.F4, NOTES.E4, NOTES.D4, NOTES.B3
+        ]
+    },
+    {
+        bpm: 160,
+        melody: [
+            NOTES.A4, NOTES.C5, NOTES.E5, NOTES.A5, NOTES.G5, NOTES.E5, NOTES.C5, NOTES.G4,
+            NOTES.F4, NOTES.A4, NOTES.C5, NOTES.F5, NOTES.E5, NOTES.C5, NOTES.G4, NOTES.E4
+        ]
     }
+];
 
-    function getData(q) {
-        return new Promise(res => {
-            const tx = db.transaction("kb", "readonly");
-            const req = tx.objectStore("kb").get(q.toLowerCase());
-            req.onsuccess = () => res(req.result ? req.result.a : null);
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new AudioContext();
+        startMusic();
+    }
+    if (audioCtx.state === 'suspended' && !isPaused) {
+        audioCtx.resume();
+    }
+}
+
+function startMusic() {
+    if (musicTimer) clearInterval(musicTimer);
+    
+    const trackIndex = Math.min(Math.floor((level - 1) / 2), TRACKS.length - 1);
+    const currentTrack = TRACKS[trackIndex];
+    const stepDuration = (60 / currentTrack.bpm) * 1000 / 2;
+
+    musicTimer = setInterval(() => {
+        if (!running || isPaused || !audioCtx || musicVolume === 0) return;
+
+        const freq = currentTrack.melody[musicStep % currentTrack.melody.length];
+        if (freq > 0) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+            gain.gain.setValueAtTime(musicVolume, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + (stepDuration/1000));
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + (stepDuration/1000));
+        }
+
+        musicStep++;
+    }, stepDuration);
+}
+
+function playScoreSound() {
+    if (!audioCtx || sfxVolume === 0 || isPaused) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.08);
+    
+    gain.gain.setValueAtTime(0.15 * sfxVolume, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+    
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.08);
+}
+
+function playSpecialSound() {
+    if (!audioCtx || sfxVolume === 0 || isPaused) return;
+
+    const freqs = [523.25, 659.25, 783.99, 1046.50];
+    freqs.forEach((freq, index) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + (index * 0.04));
+
+        gain.gain.setValueAtTime(0.12 * sfxVolume, audioCtx.currentTime + (index * 0.04));
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (index * 0.04) + 0.15);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(audioCtx.currentTime + (index * 0.04));
+        osc.stop(audioCtx.currentTime + (index * 0.04) + 0.15);
+    });
+}
+
+function playLevelUpSound() {
+    if (!audioCtx || sfxVolume === 0 || isPaused) return;
+
+    const notes = [440, 554.37, 659.25, 880];
+    notes.forEach((freq, index) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = "square";
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + (index * 0.07));
+
+        gain.gain.setValueAtTime(0.08 * sfxVolume, audioCtx.currentTime + (index * 0.07));
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (index * 0.07) + 0.2);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(audioCtx.currentTime + (index * 0.07));
+        osc.stop(audioCtx.currentTime + (index * 0.07) + 0.2);
+    });
+}
+
+/* =====================================
+   INTERFAZ PANEL OPCIONES
+===================================== */
+const settingsPanel = document.getElementById("settingsPanel");
+const settingsBtn = document.getElementById("settingsBtn");
+const closeSettingsBtn = document.getElementById("closeSettingsBtn");
+
+settingsBtn.addEventListener("click", () => {
+    initAudio();
+    settingsPanel.classList.toggle("open");
+});
+
+closeSettingsBtn.addEventListener("click", () => {
+    settingsPanel.classList.remove("open");
+});
+
+const colors = [
+    "#00eaff", "#8a2be2", "#ff2bd6", "#ff7417", "#ffe600",
+    "#26ff55", "#1976ff", "#00ffd5", "#d42bff", "#ff1744"
+];
+
+let currentColor = colors[0];
+let currentRGB = "0,234,255";
+
+function hexToRGB(hex){
+    hex = hex.replace("#","");
+    const r = parseInt(hex.substring(0,2), 16);
+    const g = parseInt(hex.substring(2,4), 16);
+    const b = parseInt(hex.substring(4,6), 16);
+    return `${r},${g},${b}`;
+}
+
+function changeColor(){
+    const index = (level - 1) % colors.length;
+    currentColor = colors[index];
+    currentRGB = hexToRGB(currentColor);
+    document.documentElement.style.setProperty("--color", currentColor);
+    flash = 1;
+}
+
+let score = 0;
+let level = 1;
+let combo = 0;
+let shieldPower = 100;
+let running = true;
+let flash = 0;
+let mapOffset = 0;
+let blockTimer = 0;
+let lastTime = performance.now();
+
+const player = {
+    x: W/2,
+    y: H-140,
+    targetX: W/2,
+    targetY: H-140,
+    vx: 0,
+    vy: 0,
+    radius: 27
+};
+
+/* CONTROLES TÁCTILES */
+let touchActive = false;
+let touchStartX = 0;
+let touchStartY = 0;
+let playerStartX = 0;
+let playerStartY = 0;
+
+window.addEventListener("mousemove", e => {
+    initAudio();
+    if (!touchActive && !isPaused) {
+        player.targetX = e.clientX;
+        player.targetY = e.clientY;
+    }
+});
+
+window.addEventListener("touchstart", e => {
+    if(e.target.closest('#settingsPanel') || e.target.closest('#settingsBtn')) return;
+    initAudio();
+    if (e.touches.length > 0 && !isPaused) {
+        touchActive = true;
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        playerStartX = player.x;
+        playerStartY = player.y;
+    }
+}, { passive: false });
+
+window.addEventListener("touchmove", e => {
+    if (e.touches.length > 0 && touchActive && !isPaused) {
+        e.preventDefault();
+        const deltaX = e.touches[0].clientX - touchStartX;
+        const deltaY = e.touches[0].clientY - touchStartY;
+
+        player.targetX = playerStartX + deltaX;
+        player.targetY = playerStartY + deltaY;
+    }
+}, { passive: false });
+
+window.addEventListener("touchend", () => {
+    touchActive = false;
+});
+
+let blocks = [];
+
+function createBlock(){
+    const size = 30 + Math.random()*25;
+    const rand = Math.random();
+    const special = rand < 0.12;
+    const multiColor = !special && rand < 0.35;
+
+    blocks.push({
+        x: Math.random() * (W-size),
+        y: -size,
+        size: size,
+        speed: 2.5 + Math.random()*2 + level*.3,
+        rotation: Math.random() * Math.PI,
+        rotationSpeed: -.04 + Math.random()*.08,
+        special: special,
+        multiColor: multiColor,
+        hue: Math.random() * 360
+    });
+}
+
+let particles = [];
+
+function explosion(x, y, color){
+    for(let i=0; i<12; i++){
+        const angle = Math.random() * Math.PI*2;
+        const speed = 1 + Math.random()*5;
+        particles.push({
+            x: x, y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 1,
+            color: color
         });
     }
+}
 
-    function renderMemory() {
-        const list = document.getElementById('mem-list');
-        list.innerHTML = "";
-        let count = 0;
-        const tx = db.transaction("kb", "readonly");
-        tx.objectStore("kb").openCursor().onsuccess = e => {
-            const cursor = e.target.result;
-            if(cursor) {
-                count++;
-                const div = document.createElement('div');
-                div.className = 'mem-item';
-                div.innerHTML = `<span>${cursor.value.q}</span><button onclick="deleteRow('${cursor.value.q}')" style="background:none; border:none; color:#ff4b6b;">✕</button>`;
-                list.appendChild(div);
-                cursor.continue();
+function updatePlayer(){
+    const dx = player.targetX - player.x;
+    const dy = player.targetY - player.y;
+
+    player.vx += dx * 0.08;
+    player.vy += dy * 0.08;
+
+    player.vx *= 0.75;
+    player.vy *= 0.75;
+
+    player.x += player.vx;
+    player.y += player.vy;
+
+    player.x = Math.max(30, Math.min(W - 30, player.x));
+    player.y = Math.max(30, Math.min(H - 30, player.y));
+}
+
+function drawMap(){
+    const gradient = ctx.createRadialGradient(
+        W/2, H*.55, 50, W/2, H*.55, Math.max(W,H)*.75
+    );
+
+    gradient.addColorStop(0, `rgba(${currentRGB},.25)`);
+    gradient.addColorStop(.45, `rgba(${currentRGB},.09)`);
+    gradient.addColorStop(1, "#02030b");
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, W, H);
+
+    mapOffset += .3;
+    const gridSize = 70;
+
+    for(let x=-gridSize; x<W+gridSize; x+=gridSize){
+        const wave = Math.sin((x+mapOffset)/100)*10;
+        ctx.strokeStyle = `rgba(${currentRGB},.08)`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x+wave, 0);
+        ctx.lineTo(x-wave, H);
+        ctx.stroke();
+    }
+
+    for(let y=-gridSize; y<H+gridSize; y+=gridSize){
+        ctx.strokeStyle = `rgba(${currentRGB},.06)`;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(W, y);
+        ctx.stroke();
+    }
+
+    if(flash>0){
+        ctx.fillStyle = `rgba(255,255,255,${flash*.35})`;
+        ctx.fillRect(0, 0, W, H);
+        flash *= .88;
+    }
+}
+
+function drawPlayer(){
+    const x = player.x;
+    const y = player.y;
+    const tilt = player.vx * .015;
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(tilt);
+
+    const aura = ctx.createRadialGradient(0, 0, 5, 0, 0, 75);
+    aura.addColorStop(0, `rgba(${currentRGB},.3)`);
+    aura.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = aura;
+    ctx.beginPath();
+    ctx.arc(0, 0, 75, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.strokeStyle = currentColor;
+    ctx.lineWidth = 3;
+    ctx.shadowBlur = 25;
+    ctx.shadowColor = currentColor;
+    ctx.beginPath();
+    ctx.arc(0, 0, 62, 0, Math.PI*2);
+    ctx.stroke();
+
+    const head = ctx.createRadialGradient(-7, -10, 3, 0, 0, 25);
+    head.addColorStop(0, "#ffffff");
+    head.addColorStop(.45, currentColor);
+    head.addColorStop(1, "#35106b");
+    ctx.fillStyle = head;
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = currentColor;
+    ctx.beginPath();
+    ctx.arc(0, -30, 22, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#06101a";
+    ctx.beginPath();
+    ctx.ellipse(-7, -31, 3, 6, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(7, -31, 3, 6, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    const body = ctx.createLinearGradient(-20, -5, 20, 35);
+    body.addColorStop(0, currentColor);
+    body.addColorStop(1, "#6b00ff");
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.roundRect(-19, -8, 38, 48, 12);
+    ctx.fill();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.shadowBlur = 25;
+    ctx.shadowColor = currentColor;
+    ctx.beginPath();
+    ctx.arc(0, 14, 7, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.strokeStyle = currentColor;
+    ctx.lineWidth = 10;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-10, 36);
+    ctx.lineTo(-13, 58);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(10, 36);
+    ctx.lineTo(13, 58);
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+function drawBlock(block){
+    ctx.save();
+    const cx = block.x + block.size/2;
+    const cy = block.y + block.size/2;
+
+    ctx.translate(cx, cy);
+    ctx.rotate(block.rotation);
+
+    if(block.special){
+        const pulse = Math.sin(performance.now()/100);
+        ctx.shadowBlur = 45 + pulse*15;
+        ctx.shadowColor = "#ffffff";
+
+        const aura = ctx.createRadialGradient(0, 0, 2, 0, 0, block.size*2);
+        aura.addColorStop(0, "#ffffff");
+        aura.addColorStop(.25, currentColor);
+        aura.addColorStop(.7, `rgba(${currentRGB},.25)`);
+        aura.addColorStop(1, "rgba(0,0,0,0)");
+
+        ctx.fillStyle = aura;
+        ctx.beginPath();
+        ctx.arc(0, 0, block.size*2, 0, Math.PI*2);
+        ctx.fill();
+
+        const specialGradient = ctx.createLinearGradient(-block.size/2, -block.size/2, block.size/2, block.size/2);
+        specialGradient.addColorStop(0, "#ffffff");
+        specialGradient.addColorStop(.35, currentColor);
+        specialGradient.addColorStop(1, "#ffffff");
+
+        ctx.fillStyle = specialGradient;
+        ctx.fillRect(-block.size/2, -block.size/2, block.size, block.size);
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(-block.size/2, -block.size/2, block.size, block.size);
+    } 
+    else if(block.multiColor) {
+        block.hue = (block.hue + 2.5) % 360;
+        const dynamicColor = `hsl(${block.hue}, 100%, 60%)`;
+        const altColor = `hsl(${(block.hue + 120) % 360}, 100%, 60%)`;
+
+        ctx.shadowBlur = 25;
+        ctx.shadowColor = dynamicColor;
+
+        const multiGrad = ctx.createLinearGradient(-block.size/2, -block.size/2, block.size/2, block.size/2);
+        multiGrad.addColorStop(0, dynamicColor);
+        multiGrad.addColorStop(0.5, altColor);
+        multiGrad.addColorStop(1, `hsl(${(block.hue + 240) % 360}, 100%, 60%)`);
+
+        ctx.fillStyle = multiGrad;
+        ctx.fillRect(-block.size/2, -block.size/2, block.size, block.size);
+
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-block.size/2, -block.size/2, block.size, block.size);
+
+        const pulse = Math.sin(performance.now()/150) * 2;
+        ctx.save();
+        ctx.rotate(-block.rotation * 2);
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(0, 0, Math.max(3, block.size/5 + pulse), 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.strokeStyle = dynamicColor;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.strokeRect(-block.size/4, -block.size/4, block.size/2, block.size/2);
+        ctx.restore();
+    } 
+    else {
+        const gradient = ctx.createLinearGradient(-block.size/2, -block.size/2, block.size/2, block.size/2);
+        gradient.addColorStop(0, currentColor);
+        gradient.addColorStop(1, "#ffffff");
+
+        ctx.fillStyle = gradient;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = currentColor;
+        ctx.fillRect(-block.size/2, -block.size/2, block.size, block.size);
+        ctx.strokeStyle = "rgba(255,255,255,.8)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-block.size/2, -block.size/2, block.size, block.size);
+    }
+
+    ctx.restore();
+}
+
+function danger(block){
+    const distanceLimit = 38;
+    const cx = block.x + block.size/2;
+    const cy = block.y + block.size/2;
+    const dx = cx - player.x;
+    const dy = cy - player.y;
+    return Math.sqrt(dx*dx + dy*dy) <= distanceLimit;
+}
+
+function updateBlocks(){
+    for(let i = blocks.length-1; i>=0; i--){
+        const b = blocks[i];
+        b.y += b.speed;
+        b.rotation += b.rotationSpeed;
+
+        if(danger(b)){
+            if(b.special){
+                score += 5;
+                combo += 3;
+                shieldPower = Math.min(100, shieldPower + 30);
+                explosion(b.x+b.size/2, b.y+b.size/2, "#ffffff");
+                explosion(b.x+b.size/2, b.y+b.size/2, currentColor);
+                playSpecialSound();
+            } else if(b.multiColor) {
+                score += 3;
+                combo += 2;
+                explosion(b.x+b.size/2, b.y+b.size/2, `hsl(${b.hue}, 100%, 60%)`);
+                explosion(b.x+b.size/2, b.y+b.size/2, "#ffffff");
+                playSpecialSound();
+            } else {
+                score += 1;
+                combo += 1;
+                explosion(b.x+b.size/2, b.y+b.size/2, currentColor);
+                playScoreSound();
             }
-            document.getElementById('count-val').innerText = count;
-        };
-    }
 
-    function deleteRow(q) {
-        const tx = db.transaction("kb", "readwrite");
-        tx.objectStore("kb").delete(q);
-        tx.oncomplete = () => renderMemory();
-    }
+            blocks.splice(i, 1);
+            const newLevel = Math.floor(score/10) + 1;
 
-    function resetMemory() {
-        if(confirm("¿Limpiar sistema?")) {
-            indexedDB.deleteDatabase(DB_NAME);
-            location.reload();
+            if(newLevel > level){
+                level = newLevel;
+                document.getElementById("level").textContent = level;
+                document.getElementById("levelNumber").textContent = level;
+                changeColor();
+                levelMessage();
+                playLevelUpSound();
+                startMusic();
+            }
+            continue;
+        }
+
+        if(b.y > H+100){
+            blocks.splice(i, 1);
         }
     }
+}
 
-    document.getElementById('userInput').addEventListener('keypress', e => e.key === 'Enter' && sendMessage());
+function updateParticles(){
+    for(let i = particles.length-1; i>=0; i--){
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= .97;
+        p.vy *= .97;
+        p.life -= .025;
+        if(p.life <= 0){
+            particles.splice(i, 1);
+        }
+    }
+}
+
+function drawParticles(){
+    for(const p of particles){
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI*2);
+        ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+}
+
+const levelMessageEl = document.getElementById("levelMessage");
+
+function levelMessage(){
+    document.getElementById("levelNumber").textContent = level;
+    levelMessageEl.classList.remove("showLevel");
+    void levelMessageEl.offsetWidth;
+    levelMessageEl.classList.add("showLevel");
+}
+
+function updateHUD(){
+    document.getElementById("score").textContent = score;
+    document.getElementById("level").textContent = level;
+    document.getElementById("combo").textContent = combo;
+    document.getElementById("shieldBar").style.width = shieldPower + "%";
+}
+
+document.getElementById("restart").addEventListener("click", () => {
+    initAudio();
+    restart();
+});
+
+function restart(){
+    isPaused = false;
+    pauseGameBtn.textContent = "⏸️ Pausar Juego";
+    pauseOverlay.style.display = "none";
+    settingsPanel.classList.remove("open");
+    
+    blocks = [];
+    particles = [];
+    score = 0;
+    level = 1;
+    combo = 0;
+    shieldPower = 100;
+    player.x = W/2;
+    player.y = H-140;
+    player.targetX = W/2;
+    player.targetY = H-140;
+    changeColor();
+    document.getElementById("gameOver").style.display = "none";
+    running = true;
+    startMusic();
+    lastTime = performance.now();
+    requestAnimationFrame(gameLoop);
+}
+
+function gameLoop(time){
+    if(!running || isPaused) return;
+
+    const dt = Math.min(32, time-lastTime);
+    lastTime = time;
+
+    blockTimer += dt;
+    const interval = Math.max(180, 700 - level*32);
+
+    if(blockTimer > interval){
+        createBlock();
+        blockTimer = 0;
+    }
+
+    updatePlayer();
+    updateBlocks();
+    updateParticles();
+
+    ctx.clearRect(0, 0, W, H);
+    drawMap();
+
+    for(const block of blocks){
+        drawBlock(block);
+    }
+
+    drawParticles();
+    drawPlayer();
+    updateHUD();
+
+    requestAnimationFrame(gameLoop);
+}
+
+changeColor();
+requestAnimationFrame(gameLoop);
 </script>
+
 </body>
 </html>
